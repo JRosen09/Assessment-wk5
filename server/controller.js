@@ -13,12 +13,68 @@ const sequelize = new Sequelize(CONNECTION_STRING, {
 });
 
 module.exports = {
-    getCountries: (req, res) => {
-        sequelize.query(
-        SELECT * FROM countrieS
-        )
-        .then(dbRes => res.status(200).send(dbRes[0]))
-        .catch(err => res.status(500).send(err));
+  getCountries: (req, res) => {
+    sequelize
+      .query(`SELECT * FROM countries;`)
+      .then((dbRes) => {
+        res.status(200).send(dbRes[0]);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  },
+
+  createCity: (req, res) => {
+    console.log(req.body);
+    const { name, rating, countryId } = req.body;
+
+    sequelize
+      .query(
+        `
+      INSERT INTO cities 
+      (name, rating, country_id)
+      VALUES
+      ('${name}', '${rating}', '${countryId}');
+    `
+      )
+      .then((dbRes) => {
+        res.status(200).send(dbRes[0]);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  },
+
+  getCities: (req, res) => {
+    sequelize.query(`SELECT city_id, 
+    cities.name as city,
+    rating,
+    countries.country_id,
+    countries.name as country
+    FROM cities
+    JOIN countries ON cities.country_id = countries.country_id;
+    `);
+  },
+
+  deleteCity: (req, res) => {
+    const { id } = req.params;
+
+    sequelize
+      .query(
+        `
+      DELETE FROM cities
+      WHERE city_id = ${id}
+      `
+      )
+
+      .then((dbRes) => {
+        res.status(200).send(dbRes[0]);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  },
+
   seed: (req, res) => {
     sequelize
       .query(
@@ -33,14 +89,9 @@ module.exports = {
 
             CREATE TABLE cities (
                 city_id SERIAL PRIMARY KEY,
-                name varchar,
-                rating varchar,
-                country_id integer REFERENCES countries(city_id)
-            );
-
-            create table countries (
-                country_id serial primary key,
-                name varchar
+                name VARCHAR,
+                rating INTEGER,
+                country_id INTEGER REFERENCES countries(country_id)
             );
 
             insert into countries (name)
@@ -238,8 +289,7 @@ module.exports = {
             ('Vietnam'),
             ('Yemen'),
             ('Zambia'),
-            ('Zimbabwe');
-        `
+            ('Zimbabwe')`
       )
       .then(() => {
         console.log("DB seeded!");
